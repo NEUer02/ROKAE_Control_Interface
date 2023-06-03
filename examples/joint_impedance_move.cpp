@@ -21,6 +21,8 @@
 #include "duration.h"
 #include "move.h"
 
+#include <unistd.h>
+
 using namespace xmate;
 using JointControl = std::function<JointPositions(RCI::robot::RobotState robot_state)>;
 int main(int argc, char *argv[])

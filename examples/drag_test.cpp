@@ -22,6 +22,8 @@
 #include "robot.h"
 #include "move.h"
 
+#include <unistd.h>
+
 using namespace xmate;
 using JointControl = std::function<JointPositions(RCI::robot::RobotState robot_state)>;
 int main(int argc, char *argv[]) {
@@ -45,7 +47,7 @@ int main(int argc, char *argv[]) {
     robot.setMotorPower(power_state);
     const double PI=3.14159;
     std::array<double,7> q_init;
-    std::array<double,7> q_drag = {{0,PI/6,PI/3,0,PI/2,0,0}};
+    std::array<double,7> q_drag = {{0,PI/6,0,PI/3,0,PI/2,0}};
     q_init = robot.receiveRobotState().q;
     MOVEJ(0.2,q_init,q_drag,robot);
     sleep(2);

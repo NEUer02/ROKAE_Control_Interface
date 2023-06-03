@@ -21,22 +21,25 @@
 #include "robot.h"
 #include "move.h"
 
+#include <unistd.h>
+
 using namespace xmate;
 using CartesianControl = std::function<CartesianPose(RCI::robot::RobotState robot_state)>;
+
 int main(int argc, char *argv[]) {
     std::string ipaddr = "192.168.0.160";
     uint16_t port = 1337;
 
-    xmate::Robot robot(ipaddr, port,XmateType::XMATE3);
+    xmate::Robot robot(ipaddr, port, XmateType::XMATE3);
     sleep(1);
     robot.setMotorPower(1);
 
-    const double PI=3.14159;
-    std::array<double,7> q_init;
-    std::array<double,7> q_drag = {{0,PI/6,PI/3,0,PI/2,0,0}};
+    const double PI = 3.14159;
+    std::array<double, 7> q_init;
+    std::array<double, 7> q_drag = {{0, PI / 6, 0, PI / 3, 0, PI / 2, 0}};
     q_init = robot.receiveRobotState().q;
-    MOVEJ(0.2,q_init,q_drag,robot);
-    
+    MOVEJ(0.2, q_init, q_drag, robot);
+
     robot.startMove(RCI::robot::StartMoveRequest::ControllerMode::kCartesianPosition,
                     RCI::robot::StartMoveRequest::MotionGeneratorMode::kCartesianPosition);
 
@@ -48,11 +51,11 @@ int main(int argc, char *argv[]) {
 
     CartesianControl cartesian_position_callback;
     cartesian_position_callback = [&](RCI::robot::RobotState robot_state) -> CartesianPose {
-        time += 0.001; 
-        if(init==true){
+        time += 0.001;
+        if (init == true) {
             init_position = robot_state.toolTobase_pos_m;
             init_psi = robot_state.psi_m;
-            init=false;
+            init = false;
         }
         constexpr double kRadius = 0.2;
         double angle = M_PI / 4 * (1 - std::cos(M_PI / 5 * time));
@@ -61,10 +64,10 @@ int main(int argc, char *argv[]) {
 
         CartesianPose output{};
         output.toolTobase_pos_c = init_position;
-        output.toolTobase_pos_c[11]+=delta_z;
+        output.toolTobase_pos_c[11] += delta_z;
         output.psi_c = init_psi;
 
-        return output;        
+        return output;
     };
 
     robot.Control(cartesian_position_callback);

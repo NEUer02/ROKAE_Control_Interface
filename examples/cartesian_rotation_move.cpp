@@ -23,6 +23,8 @@
 #include "robot.h"
 #include "move.h"
 
+#include <unistd.h>
+
 using namespace xmate;
 using CartesianControl = std::function<CartesianPose(RCI::robot::RobotState robot_state)>;
 int main(int argc, char *argv[]) {

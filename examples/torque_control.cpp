@@ -23,6 +23,8 @@
 #include "print_rci.h"
 #include "move.h"
 
+#include <unistd.h>
+
 /**
  * @直接力矩控制，笛卡尔空间的阻抗控制，运行demo的过程中，请确保手持急停
  */
@@ -42,7 +44,7 @@ int main(int argc, char *argv[])
         port = static_cast<uint16_t>(ini.GetInt("network", "port"));
     }
 
-    xmate::Robot robot(ipaddr, port,XmateType::XMATE7_PRO);
+    xmate::Robot robot(ipaddr, port,XmateType::XMATE3_PRO);
     sleep(1);
     robot.setMotorPower(1);
 
@@ -52,7 +54,7 @@ int main(int argc, char *argv[])
     q_init = robot.receiveRobotState().q;
     MOVEJ(0.2,q_init,q_drag,robot);
 
-    xmate::XmateModel model(&robot,xmate::XmateType::XMATE7);
+    xmate::XmateModel model(&robot,xmate::XmateType::XMATE3_PRO);
 
     //robot.reg();
     robot.startMove(RCI::robot::StartMoveRequest::ControllerMode::kTorque,

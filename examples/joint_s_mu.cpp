@@ -23,6 +23,9 @@
 #include "robot.h"
 #include "move.h"
 
+#include <vector>
+#include <unistd.h>
+
 using namespace xmate;
 using JointControl = std::function<JointPositions(RCI::robot::RobotState robot_state)>;
 int main(int argc, char *argv[]) {

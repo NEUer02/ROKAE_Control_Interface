@@ -20,7 +20,6 @@ set(EXAMPLES
         cartesian_s_line_mu
         joint_impedance_move
         joint_s_mu
-        joint_s_mu_ea
         torque_control
         )
 

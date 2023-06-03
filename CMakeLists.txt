@@ -9,10 +9,5 @@ SET(CMAKE_BUILD_TYPE "Debug")
 message(STATUS "PRO_PATH = " ${PROJECT_SOURCE_DIR})
 
 add_subdirectory(examples)
-
-
-
-
-
-
+add_subdirectory(src)
 

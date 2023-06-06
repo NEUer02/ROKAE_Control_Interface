@@ -1,14 +1,11 @@
 #include <array>
 #include <vector>
-#include <cmath>
-#include <functional>
 #include <iostream>
 #include <fstream>
 
 #include <Eigen/Dense>
 #include <Eigen/Core>
 
-#include <duration.h>
 #include <xmate_exception.h>
 #include <model.h>
 #include <robot.h>
@@ -16,7 +13,6 @@
 #include "ini.h"
 #include "rci_data/command_types.h"
 #include "rci_data/robot_datas.h"
-#include "print_rci.h"
 #include "move.h"
 
 #include <unistd.h>
@@ -176,9 +172,13 @@ int main(int argc, char *argv[]) {
         Eigen::Map<const Eigen::Matrix<double, 6, 1>> external_velocity(d_current_pos.data());
         Eigen::VectorXd joint_velocity(7);
 
+        // 因为7自由度机械臂的雅可比矩阵维度是7x6，无法计算逆矩阵
+        // 此时使用雅可比矩阵的广义逆解
         Eigen::Matrix<double, 6, 6> jacobian_temp = jacobian * jacobian.transpose();
         jacobian_pinv = jacobian.transpose() * jacobian_temp.inverse();
         joint_velocity = jacobian_pinv * external_velocity;
+
+        // 记录机器人末端的位置和力
         toolTobase_pos_m_sum.push_back(robot_state.toolTobase_pos_m);
         tau_ext_in_base_sum.push_back(robot_state.tau_ext_in_base);
 

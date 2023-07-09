@@ -2,6 +2,7 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include <unistd.h>
 
 #include <Eigen/Dense>
 #include <Eigen/Core>
@@ -15,16 +16,12 @@
 #include "rci_data/robot_datas.h"
 #include "move.h"
 
-#include <unistd.h>
-
 /**
  * @笛卡尔空间下的导纳拖动
  */
 using namespace xmate;
 using namespace std;
-using namespace Eigen;
-// using TorqueControl = std::function<Torques(RCI::robot::RobotState robot_state)>;
-using JointControl = std::function<JointPositions(RCI::robot::RobotState robot_state)>;
+using JointControl = function<JointPositions(RCI::robot::RobotState robot_state)>;
 
 
 void save_pos_to_txt(vector<array<double, 16>> &toolTobase_pos_m_sum) {
@@ -55,10 +52,10 @@ void save_force_to_txt(vector<array<double, 6>> &tau_ext_in_base_sum) {
 
 int main(int argc, char *argv[]) {
     // Check whether the required arguments were passed
-    std::string ipaddr = "192.168.0.160";
+    string ipaddr = "192.168.0.160";
     uint16_t port = 1337;
 
-    std::string file = "../..xmate.ini";
+    string file = "../..xmate.ini";
     INIParser ini;
     if (ini.ReadINI(file)) {
         ipaddr = ini.GetString("network", "ip");
@@ -69,13 +66,12 @@ int main(int argc, char *argv[]) {
     sleep(1);
     robot.setMotorPower(1);
 
-    const double PI = 3.14159;
     std::array<double, 7> q_init{};
-    std::array<double, 7> q_drag = {{0, PI / 6, 0, PI / 3, 0, PI / 2, 0}};
+    std::array<double, 7> q_drag = {{0, M_PI / 6, 0, M_PI / 3, 0, M_PI / 2, 0}};
     q_init = robot.receiveRobotState().q;
     MOVEJ(0.2, q_init, q_drag, robot);
 
-    xmate::XmateModel model(&robot, xmate::XmateType::XMATE3_PRO);
+    xmate::XmateModel model(&robot, XmateType::XMATE3_PRO);
 
     //robot.reg();
     robot.startMove(RCI::robot::StartMoveRequest::ControllerMode::kJointPosition,
@@ -87,12 +83,12 @@ int main(int argc, char *argv[]) {
     const double mass_param_fe{0.0};
     const double mass_param_ne{100.0};
 
-    std::array<double, 6> last_time_pos{};
-    std::array<double, 6> d_last_time_pos{};
-    std::array<double, 6> current_pos{};
-    std::array<double, 6> d_current_pos{};
-    std::vector<std::array<double, 16>> toolTobase_pos_m_sum;
-    std::vector<std::array<double, 6>> tau_ext_in_base_sum;
+    array<double, 6> last_time_pos{};
+    array<double, 6> d_last_time_pos{};
+    array<double, 6> current_pos{};
+    array<double, 6> d_current_pos{};
+    vector<array<double, 16>> toolTobase_pos_m_sum;
+    vector<array<double, 6>> tau_ext_in_base_sum;
     double ddxe, ddye, ddze;
     double dxe, dye, dze;
     double xe, ye, ze;
@@ -101,7 +97,7 @@ int main(int argc, char *argv[]) {
     double Txe, Tye, Tze;
     double dt = 0.001;
 
-    std::array<double, 16> init_position{};
+    array<double, 16> init_position{};
     Eigen::Matrix<double, 6, 7> jacobian;
     Eigen::Matrix<double, 7, 6> jacobian_pinv;
 
@@ -112,15 +108,14 @@ int main(int argc, char *argv[]) {
         static double time = 0;
         time += 0.001;
 
-        std::array<double, 6> external_force = robot_state.tau_ext_in_base; //基坐标系下的外部力矩
-        // std::array<double, 6> external_force = robot_state.tau_ext_in_stiff; //力控坐标系下的外部力矩
-        std::array<double, 42> jacobian_array = model.Jacobian(robot_state.q);
+        array<double, 6> external_force = robot_state.tau_ext_in_base; //基坐标系下的外部力矩
+        array<double, 42> jacobian_array = model.Jacobian(robot_state.q);
 
         Eigen::Map<Eigen::Matrix<double, 7, 1>> joint_pos(robot_state.q.data());
         Eigen::Map<Eigen::Matrix<double, 7, 6>> jacobian_(jacobian_array.data());
         jacobian = jacobian_.transpose();
 
-        std::array<double, 7> joint_v = robot_state.dq_m;
+        array<double, 7> joint_v = robot_state.dq_m;
         cout << joint_v[0] << " " << joint_v[1] << " " << joint_v[2] << " " << joint_v[3] << " " << joint_v[4] << " "
              << joint_v[5] << " " << joint_v[6] << endl;
 
@@ -184,13 +179,13 @@ int main(int argc, char *argv[]) {
 
         joint_pos << joint_pos + joint_velocity * dt;
 
-        std::array<double, 7> q_c_array{};
+        array<double, 7> q_c_array{};
         Eigen::VectorXd::Map(&q_c_array[0], 7) = joint_pos;
 
         output = q_c_array;
 
         if (time > 60) {
-            std::cout << "运动结束" << std::endl;
+            cout << "运动结束" << endl;
             save_pos_to_txt(toolTobase_pos_m_sum);
             save_force_to_txt(tau_ext_in_base_sum);
             return MotionFinished(output);

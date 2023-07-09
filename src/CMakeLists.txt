@@ -2,6 +2,7 @@ INCLUDE_DIRECTORIES(
         /usr/include/eigen3
         ${PROJECT_SOURCE_DIR}/inc
         ${PROJECT_SOURCE_DIR}/inc/include
+        ${PROJECT_SOURCE_DIR}/inc/optimal_excitation_trajectory
 )
 
 
@@ -12,6 +13,8 @@ LINK_DIRECTORIES(
 
 set(SRC
         ea_admittance_control
+        excitation_trajectory
+        excitation_trajectory_tools
         )
 
 foreach (src ${SRC})

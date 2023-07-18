@@ -9,6 +9,7 @@
 #include "Eigen/Dense"
 
 const double OMEGA = 0.1 * M_PI;
+const double COMPRESSION_RATIO = 0.79;
 
 int get_joint_parameters(const std::string &file_path, Eigen::MatrixXd &container);
 

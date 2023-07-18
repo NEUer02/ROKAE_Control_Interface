@@ -14,12 +14,15 @@ LINK_DIRECTORIES(
 set(SRC
         ea_admittance_control
         excitation_trajectory
-        excitation_trajectory_tools
+        draft
         )
+
+add_library(excitation_trajectory_tools excitation_trajectory_tools.cpp)
 
 foreach (src ${SRC})
     add_executable(${src} ${src}.cpp)
     TARGET_LINK_LIBRARIES(${src}
+            excitation_trajectory_tools
             RCI_Client.a
             xMateModel.a
             orocos-kdl.a

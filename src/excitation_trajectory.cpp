@@ -48,7 +48,8 @@ int main() {
     Eigen::MatrixXd trajectory_real_time_Fourier_5(7, 1);
     static double time = -0.001;
 
-    get_joint_parameters(FACTORS_PATH, Fourier_series_factors);
+    // 计算初始时刻的关节位置
+    get_Fourier_parameters(FACTORS_PATH, Fourier_series_factors);
     get_motion_info(0, trajectory_real_time_Fourier_5, Fourier_series_factors);
 
     array<double, 7> q_drag = {{0, 0, 0, 0, 0, 0, 0}};
@@ -59,7 +60,7 @@ int main() {
     q_init = robot.receiveRobotState().q;
     MOVEJ(0.2, q_init, q_drag, robot);
 
-// ===================================================================================
+// ============================ IMPORTANT FUNCTION ===========================
     vector<array<double, 7>> record;
     JointPositions command_point{};
     auto excitation_trajectory_callback = [&](RCI::robot::RobotState robot_state) -> JointPositions {
@@ -88,7 +89,7 @@ int main() {
         return command_point;
     };
 
-// ===================================================================================
+// -----------------------------------------------------------------
     robot.startMove(RCI::robot::StartMoveRequest::ControllerMode::kJointPosition,
                     RCI::robot::StartMoveRequest::MotionGeneratorMode::kJointPosition);
     robot.Control(excitation_trajectory_callback);

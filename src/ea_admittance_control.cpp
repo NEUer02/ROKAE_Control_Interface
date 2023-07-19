@@ -23,7 +23,6 @@
 using namespace xmate;
 using namespace std;
 using namespace Eigen;
-// using TorqueControl = std::function<Torques(RCI::robot::RobotState robot_state)>;
 using JointControl = std::function<JointPositions(RCI::robot::RobotState robot_state)>;
 
 

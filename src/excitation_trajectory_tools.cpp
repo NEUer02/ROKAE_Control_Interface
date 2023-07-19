@@ -47,7 +47,7 @@ int get_motion_info(const double &t, Eigen::MatrixXd &container, const Eigen::Ma
 
     Fourier_series_body(10, 0) = 1;
 
-    container = Fourier_factors * Fourier_series_body;
+    container = COMPRESSION_RATIO * Fourier_factors * Fourier_series_body;
 
     return 0;
 }

@@ -14,7 +14,6 @@ LINK_DIRECTORIES(
 set(SRC
         ea_admittance_control
         excitation_trajectory
-        draft
         )
 
 add_library(excitation_trajectory_tools excitation_trajectory_tools.cpp)

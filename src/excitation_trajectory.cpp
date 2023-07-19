@@ -6,7 +6,6 @@
 #include <Eigen/Core>
 
 #include <xmate_exception.h>
-#include <model.h>
 #include <robot.h>
 #include <iomanip>
 
@@ -44,7 +43,6 @@ int main() {
     sleep(1);
     robot.setMotorPower(1);
 
-    //------
     Eigen::MatrixXd Fourier_series_factors(7, 11);
     Eigen::MatrixXd Fourier_series_body(11, 1);
     Eigen::MatrixXd trajectory_real_time_Fourier_5(7, 1);
@@ -55,10 +53,8 @@ int main() {
 
     array<double, 7> q_drag = {{0, 0, 0, 0, 0, 0, 0}};
     Eigen::Map<Eigen::MatrixXd>(q_drag.data(), trajectory_real_time_Fourier_5.rows(),
-                                trajectory_real_time_Fourier_5.cols()) =
-            COMPRESSION_RATIO * trajectory_real_time_Fourier_5;
+                                trajectory_real_time_Fourier_5.cols()) = trajectory_real_time_Fourier_5;
 
-    //------
     array<double, 7> q_init{};
     q_init = robot.receiveRobotState().q;
     MOVEJ(0.2, q_init, q_drag, robot);
@@ -72,13 +68,16 @@ int main() {
         time += 0.001;
 
         get_motion_info(time, trajectory_real_time_Fourier_5, Fourier_series_factors);
-        trajectory_real_time_Fourier_5 = COMPRESSION_RATIO * trajectory_real_time_Fourier_5;
         Eigen::Map<Eigen::MatrixXd>(tmp.data(), trajectory_real_time_Fourier_5.rows(),
                                     trajectory_real_time_Fourier_5.cols()) = trajectory_real_time_Fourier_5;
         command_point = tmp;
 
         auto torque_joint = robot_state.tau_m;
+        auto point_joint = robot_state.q;
+        auto speed_joint = robot_state.dq_m;
         record.push_back(torque_joint);
+        record.push_back(point_joint);
+        record.push_back(speed_joint);
 
         if (time > 20) {
             std::cout << "运动结束" << std::endl;
@@ -90,12 +89,10 @@ int main() {
     };
 
 // ===================================================================================
-    //robot.reg();
     robot.startMove(RCI::robot::StartMoveRequest::ControllerMode::kJointPosition,
                     RCI::robot::StartMoveRequest::MotionGeneratorMode::kJointPosition);
     robot.Control(excitation_trajectory_callback);
 
-    //直接按ctrl_c停止，注意急停开关
     return 0;
 }
 
@@ -111,12 +108,24 @@ inline void record_in_txt(const vector<array<double, 7>> &record) {
 
     ofstream record_txt;
     record_txt.open(txt_name, ios::app);
-    for (const auto &row: record) {
-        for (const auto &torque: row) {
+
+    for (int i = 0; i < record.size(); i = i + 3) {
+        record_txt << "frame: " << i / 3;
+        record_txt << " torque: ";
+        for (auto torque: record[i]) {
             record_txt << torque << " ";
         }
-        record_txt << std::endl;
+        record_txt << " point: ";
+        for (auto point: record[i + 1]) {
+            record_txt << point << " ";
+        }
+        record_txt << " speed: ";
+        for (auto speed: record[i + 2]) {
+            record_txt << speed << " ";
+        }
+        record_txt << "\n";
     }
+
     record_txt.close();
 }
 
@@ -132,11 +141,28 @@ inline void record_in_csv(const vector<array<double, 7>> &record) {
 
     ofstream record_csv;
     record_csv.open(csv_name, ios::app);
-    for (const auto &row: record) {
-        for (const auto &torque: row) {
-            record_csv << torque << " ";
+
+    const vector<string> col_names{"时间",
+                                   "力矩1", "力矩2", "力矩3", "力矩4", "力矩5", "力矩6", "力矩7",
+                                   "位置1", "位置2", "位置3", "位置4", "位置5", "位置6", "位置7",
+                                   "速度1", "速度2", "速度3", "速度4", "速度5", "速度6", "速度7"};
+    for (auto &name: col_names) {
+        record_csv << name << ",";
+    }
+    record_csv << "\n";
+
+    for (int i = 0; i < record.size(); i = i + 3) {
+        record_csv << i / 3 << ", ";
+        for (auto torque: record[i]) {
+            record_csv << torque << ", ";
         }
-        record_csv << std::endl;
+        for (auto point: record[i + 1]) {
+            record_csv << point << ", ";
+        }
+        for (auto speed: record[i + 2]) {
+            record_csv << speed << ", ";
+        }
+        record_csv << "\n";
     }
     record_csv.close();
 }

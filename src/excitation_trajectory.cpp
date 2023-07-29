@@ -1,19 +1,36 @@
+// joint_excitation_demo.cpp
+
+// This program demonstrates joint space excitation on a XMATE robot
+// using Fourier series trajectory generation.
+
+// It connects to a XMATE robot, reads Fourier series parameters from file,
+// generates joint space trajectories, sends position commands, and logs
+// joint torque, position and velocity data during motion.
+
+// Authors: Pang Hanyu
+// Created: 2023-07-29
+
 #include <array>
 #include <fstream>
 #include <unistd.h>
 
+// XMATE libraries
 #include <Eigen/Dense>
 #include <Eigen/Core>
-
 #include <xmate_exception.h>
 #include <robot.h>
-#include <iomanip>
 
+// headers for trajectory generation
+#include "excitation_trajectory_tools.h"
+
+// XMATE control command headers
 #include "rci_data/command_types.h"
 #include "rci_data/robot_datas.h"
+
+// XMATE motion control headers
 #include "move.h"
 
-#include "excitation_trajectory_tools.h"
+// INI file parsing
 #include "ini.h"
 
 
@@ -21,8 +38,8 @@ using namespace xmate;
 using namespace std;
 using JointControl = function<JointPositions(RCI::robot::RobotState robot_state)>;
 
-const string SAVE_PATH = "/home/aowupang/文档/code/ROKAE_Control_Interface/data/joint_force_log/";
-const string FACTORS_PATH = "/home/aowupang/文档/code/ROKAE_Control_Interface/data/optimal_trajectory/opt_x.txt";
+const string SAVE_PATH = "../../data/joint_force_log/";
+const string FACTORS_PATH = "../../data/optimal_trajectory/opt_x.txt";
 
 inline void record_in_txt(const vector<array<double, 7>> &record);
 
@@ -40,7 +57,7 @@ int main() {
     }
 
     xmate::Robot robot(ipaddr, port, XmateType::XMATE3_PRO);
-    sleep(1);
+    sleep(1);   // 为保证机械臂运行稳定
     robot.setMotorPower(1);
 
     Eigen::MatrixXd Fourier_series_factors(7, 11);
@@ -60,9 +77,11 @@ int main() {
     q_init = robot.receiveRobotState().q;
     MOVEJ(0.2, q_init, q_drag, robot);
 
-// ============================ IMPORTANT FUNCTION ===========================
+    // ============================ IMPORTANT FUNCTION ===========================
     vector<array<double, 7>> record;
     JointPositions command_point{};
+
+    // 机械臂回调函数
     auto excitation_trajectory_callback = [&](RCI::robot::RobotState robot_state) -> JointPositions {
         array<double, 7> tmp{};
 
@@ -89,7 +108,7 @@ int main() {
         return command_point;
     };
 
-// -----------------------------------------------------------------
+    // ----------------------------------------------------------------------------
     robot.startMove(RCI::robot::StartMoveRequest::ControllerMode::kJointPosition,
                     RCI::robot::StartMoveRequest::MotionGeneratorMode::kJointPosition);
     robot.Control(excitation_trajectory_callback);

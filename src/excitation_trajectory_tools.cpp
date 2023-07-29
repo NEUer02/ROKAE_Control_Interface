@@ -1,6 +1,10 @@
+// excitation_trajectory_tools.cpp
+// 本文件实现了从文件中读取傅里叶级数参数并计算关节运动轨迹的相关函数
+// 从文件中读取的傅里叶级数的参数。
 //
-// Created by lab316-test on 7/8/23.
-//
+// Author: Pang Hanyu
+// Created: 2023-07-29
+
 #include <iostream>
 #include <fstream>
 #include <vector>

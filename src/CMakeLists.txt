@@ -3,6 +3,7 @@ INCLUDE_DIRECTORIES(
         ${PROJECT_SOURCE_DIR}/inc
         ${PROJECT_SOURCE_DIR}/inc/include
         ${PROJECT_SOURCE_DIR}/inc/optimal_excitation_trajectory
+        ${PROJECT_SOURCE_DIR}/inc/constant_jointspace_impedance
 )
 
 
@@ -14,9 +15,10 @@ LINK_DIRECTORIES(
 set(SRC
         ea_admittance_control
         excitation_trajectory
+        constant_jointSpace_impedance
         )
 
-add_library(excitation_trajectory_tools excitation_trajectory_tools.cpp)
+add_library(excitation_trajectory_tools utils/excitation_trajectory_tools.cpp utils/torque_from_regression_matrix.cpp)
 
 foreach (src ${SRC})
     add_executable(${src} ${src}.cpp)

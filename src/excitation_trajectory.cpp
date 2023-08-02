@@ -13,30 +13,21 @@
 #include <array>
 #include <fstream>
 #include <unistd.h>
-
-// XMATE libraries
 #include <Eigen/Dense>
 #include <Eigen/Core>
 #include <xmate_exception.h>
 #include <robot.h>
-
-// headers for trajectory generation
+#include <iomanip>
 #include "excitation_trajectory_tools.h"
-
-// XMATE control command headers
 #include "rci_data/command_types.h"
 #include "rci_data/robot_datas.h"
-
-// XMATE motion control headers
 #include "move.h"
-
-// INI file parsing
 #include "ini.h"
 
 
 using namespace xmate;
 using namespace std;
-using JointControl = function<JointPositions(RCI::robot::RobotState robot_state)>;
+// using JointControl = function<JointPositions(RCI::robot::RobotState robot_state)>;
 
 const string SAVE_PATH = "../../data/joint_force_log/";
 const string FACTORS_PATH = "../../data/optimal_trajectory/opt_x.txt";

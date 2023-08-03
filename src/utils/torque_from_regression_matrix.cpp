@@ -6,7 +6,7 @@
 //
 
 // Include Files
-#include "../include/torque_from_regression_matrix.h"
+#include "torque_from_regression_matrix.h"
 #include <cmath>
 #include <array>
 

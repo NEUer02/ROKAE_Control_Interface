@@ -33,7 +33,6 @@ int main() {
     static double time = -0.001;
 
     array<double, 7> q_drag = {{0, M_PI / 6, 0, M_PI / 3, 0, M_PI / 2, 0}};
-
     array<double, 7> q_init{};
     q_init = robot.receiveRobotState().q;
     MOVEJ(0.2, q_init, q_drag, robot);
@@ -58,11 +57,13 @@ int main() {
     Eigen::Map<Eigen::VectorXd> torque_command(torque_command_array.data(), torque_command_array.size());
 
     Eigen::DiagonalMatrix<double, 7> M_coefficient;
-    M_coefficient.diagonal() << 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1;
+    M_coefficient.diagonal() << 1, 1, 1, 1, 1, 1, 1;
     Eigen::DiagonalMatrix<double, 7> D_coefficient;
     D_coefficient.diagonal() << 1, 1, 1, 1, 1, 1, 1;
     Eigen::DiagonalMatrix<double, 7> K_coefficient;
-    K_coefficient.diagonal() << 1, 1, 1, 1, 1, 1, 1;
+    K_coefficient.diagonal() << 100, 100, 100, 100, 100, 100, 100;
+
+    cout << "初始化结束，等待回调函数。" << endl;
     // ---------------------------------------------------------------------------
 
     // ============================ IMPORTANT FUNCTION ===========================
@@ -80,12 +81,11 @@ int main() {
         qd_last_array = robot_state.dq_m;
 
         torque_from_regression_matrix(robot_state.q, robot_state.dq_m, qdd_array, torque_array);
-        torque_command = torque - (M_coefficient * (qdd_aim - qdd) + D_coefficient * (qd_aim - qd) +
-                                   K_coefficient * (q_aim - q));
+        torque_command = torque - (M_coefficient * (qdd_aim - qdd) + D_coefficient * (qd_aim - qd) + K_coefficient * (q_aim - q));
         torque_commit = torque_command_array;
 
         if (time > 60) {
-            std::cout << "运动结束" << std::endl;
+            cout << "运动结束" << endl;
             return MotionFinished(torque_commit);
         }
         return torque_commit;
@@ -93,7 +93,7 @@ int main() {
 
     // ---------------------------------------------------------------------------
     robot.startMove(RCI::robot::StartMoveRequest::ControllerMode::kTorque,
-                    RCI::robot::StartMoveRequest::MotionGeneratorMode::kJointPosition);
+                    RCI::robot::StartMoveRequest::MotionGeneratorMode::kIdle);
     robot.Control(constant_jointSpace_impedance_callback);
 
     return 0;

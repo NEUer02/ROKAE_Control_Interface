@@ -30,31 +30,30 @@
  */
 using namespace xmate;
 using TorqueControl = std::function<Torques(RCI::robot::RobotState robot_state)>;
-int main(int argc, char *argv[])
-{
+
+int main(int argc, char *argv[]) {
     // Check whether the required arguments were passed
     std::string ipaddr = "192.168.0.160";
     uint16_t port = 1337;
 
     std::string file = "../..xmate.ini";
     INIParser ini;
-    if (ini.ReadINI(file))
-    {
+    if (ini.ReadINI(file)) {
         ipaddr = ini.GetString("network", "ip");
         port = static_cast<uint16_t>(ini.GetInt("network", "port"));
     }
 
-    xmate::Robot robot(ipaddr, port,XmateType::XMATE3_PRO);
+    xmate::Robot robot(ipaddr, port, XmateType::XMATE3_PRO);
     sleep(1);
     robot.setMotorPower(1);
 
-    const double PI=3.14159;
-    std::array<double,7> q_init;
-    std::array<double,7> q_drag = {{0,PI/6,0,PI/3,0,PI/2,0}};
+    const double PI = 3.14159;
+    std::array<double, 7> q_init;
+    std::array<double, 7> q_drag = {{0, PI / 6, 0, PI / 3, 0, PI / 2, 0}};
     q_init = robot.receiveRobotState().q;
-    MOVEJ(0.2,q_init,q_drag,robot);
+    MOVEJ(0.2, q_init, q_drag, robot);
 
-    xmate::XmateModel model(&robot,xmate::XmateType::XMATE3_PRO);
+    xmate::XmateModel model(&robot, xmate::XmateType::XMATE3_PRO);
 
     //robot.reg();
     robot.startMove(RCI::robot::StartMoveRequest::ControllerMode::kTorque,
@@ -69,31 +68,33 @@ int main(int argc, char *argv[])
     stiffness.bottomRightCorner(3, 3) << rotational_stiffness * Eigen::MatrixXd::Identity(3, 3);
     damping.setZero();
     damping.topLeftCorner(3, 3) << 0.0 * sqrt(translational_stiffness) *
-                                       Eigen::MatrixXd::Identity(3, 3);
+                                   Eigen::MatrixXd::Identity(3, 3);
     damping.bottomRightCorner(3, 3) << 0.0 * sqrt(rotational_stiffness) *
-                                           Eigen::MatrixXd::Identity(3, 3);
+                                       Eigen::MatrixXd::Identity(3, 3);
 
 
     std::array<double, 16> init_position;
     static bool init = true;
     Eigen::Matrix<double, 6, 7> jacobian;
 
-    TorqueControl  torque_control_callback;
+    TorqueControl torque_control_callback;
     torque_control_callback = [&](RCI::robot::RobotState robot_state) -> Torques {
-        
-        static double time=0;
-        time += 0.001; 
-        if(init==true){
+
+        static double time = 0;
+        time += 0.001;
+        if (init == true) {
             init_position = robot_state.toolTobase_pos_m;
-            init=false;
+            init = false;
         }
         Eigen::Affine3d initial_transform(Eigen::Matrix4d::Map(init_position.data()).transpose());
         Eigen::Vector3d position_d(initial_transform.translation());
         Eigen::Quaterniond orientation_d(initial_transform.linear());
 
-        std::array<double, 42> jacobian_array =model.Jacobian(robot_state.q);
-        std::array<double, 7> gravity_array = model.GetTau(robot_state.q, robot_state.dq_m, robot_state.ddq_c, xmate::TauType::TAU_GRAVITY);
-        std::array<double, 7> friction_array = model.GetTau(robot_state.q, robot_state.dq_m, robot_state.ddq_c, xmate::TauType::TAU_FRICTION);
+        std::array<double, 42> jacobian_array = model.Jacobian(robot_state.q);
+        std::array<double, 7> gravity_array = model.GetTau(robot_state.q, robot_state.dq_m, robot_state.ddq_c,
+                                                           xmate::TauType::TAU_GRAVITY);
+        std::array<double, 7> friction_array = model.GetTau(robot_state.q, robot_state.dq_m, robot_state.ddq_c,
+                                                            xmate::TauType::TAU_FRICTION);
 
         // convert to Eigen
         Eigen::Map<const Eigen::Matrix<double, 7, 1>> gravity(gravity_array.data());
@@ -113,8 +114,7 @@ int main(int argc, char *argv[])
 
         // orientation error
         // "difference" quaternion
-        if (orientation_d.coeffs().dot(orientation.coeffs()) < 0.0)
-        {
+        if (orientation_d.coeffs().dot(orientation.coeffs()) < 0.0) {
             orientation.coeffs() << -orientation.coeffs();
         }
         // "difference" quaternion
@@ -135,17 +135,17 @@ int main(int argc, char *argv[])
         Torques output{};
         output.tau_c = tau_d_array;
 
-        if(time>20){
-            std::cout<<"运动结束"<<std::endl;
+        if (time > 20) {
+            std::cout << "运动结束" << std::endl;
             return MotionFinished(output);
         }
-        return output;        
+        return output;
     };
 
     // start real-time control loop
-    std::cout  << "Make sure you have the user stop at hand!" << std::endl
-			   << "After starting try to push the robot and see how it reacts." << std::endl
-			   << "Press Enter to continue..." << std::endl;
+    std::cout << "Make sure you have the user stop at hand!" << std::endl
+              << "After starting try to push the robot and see how it reacts." << std::endl
+              << "Press Enter to continue..." << std::endl;
     std::cin.ignore();
 
     // robot.startMove(RCI::robot::StartMoveRequest::ControllerMode::kTorque,
